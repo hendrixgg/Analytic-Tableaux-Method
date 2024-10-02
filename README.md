@@ -19,9 +19,9 @@ By far the most reliable way to get things running is with [Docker](https://www.
 2. Navigate to your project folder on the command line.
 
 3. We first have to build the course image. To do so use the command:
-`docker build -t cisc204 .`
+`docker build -t Analytic-Tableaux-Method .`
 
-4. Now that we have the image we can run the image as a container by using the command: `docker run -it -v $(pwd):/PROJECT cisc204 /bin/bash`
+4. Now that we have the image we can run the image as a container by using the command: `docker run -it -v $(pwd):/PROJECT Analytic-Tableaux-Method /bin/bash`
 
     `$(pwd)` will be the current path to the folder and will link to the container
 
