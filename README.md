@@ -14,7 +14,7 @@ Change this README.md file to summarize your project, and provide pointers to th
 
 By far the most reliable way to get things running is with [Docker](https://www.docker.com). This section runs through the steps and extra tips to running with Docker. You can remove this section for your final submission, and replace it with a section on how to run your project.
 
-1. First, download Docker https://www.docker.com/get-started
+1. First, download Docker https://www.docker.com/get-started, and get it running.
 
 2. Navigate to your project folder on the command line.
 
@@ -28,6 +28,8 @@ By far the most reliable way to get things running is with [Docker](https://www.
     `/PROJECT` is the folder in the container that will be tied to your local directory
 
 5. From there the two folders should be connected, everything you do in one automatically updates in the other. For the project you will write the code in your local directory and then run it through the docker command line. A quick test to see if they're working is to create a file in the folder on your computer then use the terminal to see if it also shows up in the docker container.
+
+6. End the terminal session using the `exit`.
 
 ### Mac Users w/ M1 Chips
 
