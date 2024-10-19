@@ -49,11 +49,11 @@ class Symbol:
 # Could make this a regex pattern to allow for more than one letter symbols, this would be helpful so you don't have to type special characters.
 atomic_proposition_strings = list(
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-negation_strings = ["¬", "~", "!", "not"]
-conjunction_strings = ["∧", "&", "/\\", "and"]
-disjunction_strings = ["∨", "|", "\\/", "or"]
-implication_strings = ["→", "->", ">>", "implies"]
-# biconditional_strings = ["↔", "<->", "iff", "if and only if"]
+negation_strings = ["¬", "~", "!"]  # , "not"]
+conjunction_strings = ["∧", "&", "/\\"]  # , "and"]
+disjunction_strings = ["∨", "|", "\\/"]  # , "or"]
+implication_strings = ["→", "->", ">>"]  # , "implies"]
+# biconditional_strings = ["↔", "<->"]#, "iff", "if and only if"]
 left_parenthesis_strings = ["(", "[", "{"]
 right_parenthesis_strings = [")", "]", "}"]
 
@@ -178,10 +178,13 @@ class PropositionalLogicFormula:
         return isinstance(other, PropositionalLogicFormula) and self.symbol == other.symbol and self.children == other.children and self.id == other.id
 
     def __hash__(self):
-        return hash(stringify_formula(self, "infix")[1])
+        return hash(stringify_formula(self, "prefix")[1])
+
+    def __repr__(self):
+        return stringify_formula(self, "prefix")[1]
 
 
-def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefix", "infix", "postfix"] = "infix") -> Tuple[bool, str]:
+def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefix", "infix", "postfix"]) -> Tuple[bool, str]:
     """
     Converts the formula from a list of integers to a string of symbols.
 
@@ -203,8 +206,16 @@ def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefi
         success_child, child_formula = stringify_formula(
             formula.children[0], format)
         if success_child:
-            result_formula = f"{NEGATION.string_representations[NEGATION.default_representation]}({child_formula})"
+            if format == "prefix":
+                result_formula = f"{NEGATION.string_representations[NEGATION.default_representation]}{child_formula}"
+            elif format == "infix":
+                result_formula = f"({NEGATION.string_representations[NEGATION.default_representation]}{child_formula})"
+            elif format == "postfix":
+                result_formula = f"{child_formula}{NEGATION.string_representations[NEGATION.default_representation]}"
             success = True
+        else:
+            result_formula = ""
+            success = False
     elif formula.symbol in CONNECTIVES:
         success_child1, child_formula1 = stringify_formula(
             formula.children[0], format)
@@ -214,11 +225,11 @@ def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefi
             symbol_representation = default_symbol_represenation(
                 formula.symbol)
             if format == "prefix":
-                result_formula = f"({symbol_representation} {child_formula1} {child_formula2})"
-            if format == "infix":
+                result_formula = f"{symbol_representation} {child_formula1} {child_formula2}"
+            elif format == "infix":
                 result_formula = f"({child_formula1} {symbol_representation} {child_formula2})"
             elif format == "postfix":
-                result_formula = f"({child_formula1} {child_formula2} {symbol_representation})"
+                result_formula = f"{child_formula1} {child_formula2} {symbol_representation}"
             else:
                 result_formula = ""
                 success = False
@@ -534,15 +545,21 @@ def is_contradiction_tableaux(tableaux: AnalyticTableaux) -> Tuple[bool, bool]:
         is_literal = is_atomic or is_atomic_negation
         if is_literal:
             # if we are creating the branches to be inputted into the logic encoding, at this point we would just add the literal as a positive or negative literal as a constraint for this branch.
+            # obrain the opposite formula
             if is_atomic:
-                opposite_formula = PropositionalLogicFormula(
+                opposite_literal = PropositionalLogicFormula(
                     SYMBOL_TYPE.NEGATION, [new_formula])
             else:  # is_atomic_negation
-                opposite_formula = new_formula.children[0]
-            if opposite_formula in tableaux.literals:
+                opposite_literal = new_formula.children[0]
+
+            # check if the opposite formula is in the literals, if so, then the branch is closed.
+            if opposite_literal in tableaux.literals:
                 # a contradiction has been reached, the branch is closed.
                 success = True
                 result = True
+            # opposite formula is not in the literals, so add the new formula to the literals if it is not already there.
+            elif new_formula in tableaux.literals:
+                success, result = is_contradiction_tableaux(tableaux)
             else:
                 tableaux.literals.add(new_formula)
                 success, result = is_contradiction_tableaux(tableaux)
@@ -570,14 +587,15 @@ def is_contradiction_tableaux(tableaux: AnalyticTableaux) -> Tuple[bool, bool]:
         tableaux.new_formulas.append(new_formula)
     # Produce new formulas from non_branching_formulas
     elif len(tableaux.non_branching_formulas) > 0:
-        formula = tableaux.non_branching_formulas.pop()
-        pattern = [formula.symbol, formula.children[0].symbol]
+        inference_formula = tableaux.non_branching_formulas.pop()
+        pattern = [inference_formula.symbol,
+                   inference_formula.children[0].symbol]
         # apply inference rules
         # add new formulas to tableaux.new_formulas and recurse
         rule = next(
             (rule for rule in non_branching_inference_rules if rule.symbol_pattern == pattern), None)
         if rule is not None:
-            new_formulas = rule.inference(formula)
+            new_formulas = rule.inference(inference_formula)
             tableaux.new_formulas.extend(new_formulas)
             success, result = is_contradiction_tableaux(tableaux)
             # Remove the new formulas from the tableaux in case of backtracking
@@ -586,22 +604,23 @@ def is_contradiction_tableaux(tableaux: AnalyticTableaux) -> Tuple[bool, bool]:
             success = False
             # assert False, "invalid formula"
         # push the formula back onto the stack in case of backtracking
-        tableaux.non_branching_formulas.append(formula)
+        tableaux.non_branching_formulas.append(inference_formula)
     # Produce new formulas from branching_formulas
     elif len(tableaux.branching_formulas) > 0:
-        formula = tableaux.branching_formulas.pop()
-        pattern = [formula.symbol, formula.children[0].symbol]
+        inference_formula = tableaux.branching_formulas.pop()
+        pattern = [inference_formula.symbol,
+                   inference_formula.children[0].symbol]
         # apply inference rules
         # add new formulas to tableaux.new_formulas
         rule = next(
             (rule for rule in branching_inference_rules if rule.symbol_pattern == pattern), None)
         if rule is not None:
-            new_formulas = rule.inference(formula)
+            new_formulas = rule.inference(inference_formula)
             # If all branches are contradictions, then the formula is a contradiction.
             success = True
             result = True
-            for formula in new_formulas:
-                tableaux.new_formulas.append(formula)
+            for new_formula in new_formulas:
+                tableaux.new_formulas.append(new_formula)
                 branch_success, branch_result = is_contradiction_tableaux(
                     tableaux)
                 success = success and branch_success
@@ -612,7 +631,7 @@ def is_contradiction_tableaux(tableaux: AnalyticTableaux) -> Tuple[bool, bool]:
             success = False
             # assert False, "invalid formula"
         # push the formula back onto the stack in case of backtracking
-        tableaux.branching_formulas.append(formula)
+        tableaux.branching_formulas.append(inference_formula)
     # No formulas to process.
     else:
         success = True
@@ -707,9 +726,18 @@ if __name__ == "__main__":
     print(list1 == list2)
     print([ord(c) for c in left_parenthesis_strings])
     print([ord(c) for c in right_parenthesis_strings])
+    print(parse_infix_formula("()"))
     formula_string = "A&B"
     print(full_test_formula(formula_string)[1])
     formula_string = "A->B"
     print(full_test_formula(formula_string)[1])
     formula_string = "((A->B)&A)->B"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "((A->B)&~B)->~A"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "(A->~~A)"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "((~~A)->A)"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "(A->~~A)&((~~A)->A)"
     print(full_test_formula(formula_string)[1])
