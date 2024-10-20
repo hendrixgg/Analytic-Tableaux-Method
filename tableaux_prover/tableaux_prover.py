@@ -1,9 +1,8 @@
-from dataclasses import dataclass, field
 from typing import List, Tuple, Literal, Callable
 
-from tableaux_method_solver.formula_symbols import *
-from tableaux_method_solver.propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
-from tableaux_method_solver.inference_rules import *
+from formula_symbols import *
+from propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
+from inference_rules import *
 
 
 # all lists are stacks, so we can use pop() to get the last element and append() to add a new element.
@@ -232,6 +231,10 @@ def main():
     """
     This is where we can run test cases.
     """
+    formula_string = "A|~A"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "A&~A"
+    print(full_test_formula(formula_string)[1])
     formula_string = "A&B"
     print(full_test_formula(formula_string)[1])
     formula_string = "A->B"
@@ -245,6 +248,10 @@ def main():
     formula_string = "((~~A)->A)"
     print(full_test_formula(formula_string)[1])
     formula_string = "(A->~~A)&((~~A)->A)"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "((A->B)&(B->C))->(A->C)"
+    print(full_test_formula(formula_string)[1])
+    formula_string = "(A->(B->A))"
     print(full_test_formula(formula_string)[1])
     pass
 
