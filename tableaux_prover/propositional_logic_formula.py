@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Literal, Callable
 
-from tableaux_method_solver.formula_symbols import *
+from formula_symbols import *
 
 
 @dataclass
