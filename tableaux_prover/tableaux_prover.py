@@ -231,27 +231,43 @@ def main():
     """
     This is where we can run test cases.
     """
+    # law of excluded middle
     formula_string = "A|~A"
     print(full_test_formula(formula_string)[1])
+    # law of noncontradiction
     formula_string = "A&~A"
     print(full_test_formula(formula_string)[1])
+    # contingencies
     formula_string = "A&B"
     print(full_test_formula(formula_string)[1])
     formula_string = "A->B"
     print(full_test_formula(formula_string)[1])
+    # modus ponens
     formula_string = "((A->B)&A)->B"
     print(full_test_formula(formula_string)[1])
+    # modus tollens
     formula_string = "((A->B)&~B)->~A"
     print(full_test_formula(formula_string)[1])
+    # contrapositive
+    formula_string = "(A->B) -> ((~B) -> (~A))"
+    print(full_test_formula(formula_string)[1])
+    # double negation
     formula_string = "(A->~~A)"
     print(full_test_formula(formula_string)[1])
     formula_string = "((~~A)->A)"
     print(full_test_formula(formula_string)[1])
     formula_string = "(A->~~A)&((~~A)->A)"
     print(full_test_formula(formula_string)[1])
+    # forward chaining
     formula_string = "((A->B)&(B->C))->(A->C)"
     print(full_test_formula(formula_string)[1])
     formula_string = "(A->(B->A))"
+    print(full_test_formula(formula_string)[1])
+    # de morgan's laws
+    formula_string = "((~(A&B))->((~A)|(~B))) & (((~A)|(~B))->(~(A&B)))"
+    print(full_test_formula(formula_string)[1])
+    # substitution
+    formula_string = "( ((A->B) & (B->A)) -> ( (~A) & (A & C) & (A | D) & (A -> E) & (F -> A) ) -> ( (~B) & (B & C) & (B | D) & (B -> E) & (F -> B) ) )"
     print(full_test_formula(formula_string)[1])
     pass
 
