@@ -1,0 +1,128 @@
+from typing import List, Tuple, Literal, Callable
+
+from formula_symbols import *
+from propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
+from inference_rules import *
+from tableaux_classifier import AnalyticTableaux, classify_propositional_logic_formula
+
+def isAtomic(symbol: SYMBOL_TYPE) -> bool:
+    return symbol == SYMBOL_TYPE.PROPOSITION
+
+def isAtomicNegation(formula: PropositionalLogicFormula) -> bool:
+    return formula.symbol == SYMBOL_TYPE.NEGATION and formula.children[0].symbol == SYMBOL_TYPE.PROPOSITION
+
+def isLiteral(formula: PropositionalLogicFormula) -> list[bool]:
+    atomic = isAtomic(formula.symbol)
+    atomicNegation = isAtomicNegation(formula)
+    return [(atomic or atomicNegation), atomic] # returns [isLiteral, isAtomic]
+
+def generateNegation(formula: PropositionalLogicFormula) -> PropositionalLogicFormula:
+    return PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [formula])
+
+def generatePattern(formula: PropositionalLogicFormula) -> list[SYMBOL_TYPE]:
+    return [formula.symbol, formula.children[0].symbol]
+    
+def isBranching(pattern: list[SYMBOL_TYPE]) -> bool:
+    return pattern in branching_inference_patterns
+
+def tableaux_aggregator(tableaux: AnalyticTableaux, literal_set: set[PropositionalLogicFormula]) -> list[set[PropositionalLogicFormula]]:
+    branches = []
+    
+    if tableaux is None:
+        return set()
+    
+    if len(tableaux.new_formulas) > 0:
+        curr_formula = tableaux.new_formulas.pop()
+        is_literal: list[bool] = isLiteral(curr_formula)
+        if is_literal[0]:
+            if curr_formula in tableaux.literals:
+                branches = tableaux_aggregator(tableaux, literal_set)
+            else:
+                tableaux.literals.add(curr_formula)
+                branches = tableaux_aggregator(tableaux, literal_set)
+                tableaux.literals.remove(curr_formula)
+                
+        elif not is_literal[0]: #isComplex
+            pattern = generatePattern(curr_formula)
+            if isBranching(pattern):
+                
+                tableaux.branching_formulas.append(curr_formula)
+                branches = tableaux_aggregator(tableaux, literal_set)
+                tableaux.branching_formulas.pop()
+                
+            elif not isBranching(pattern):
+                
+                tableaux.non_branching_formulas.append(curr_formula)
+                branches = tableaux_aggregator(pattern, literal_set)
+                tableaux.non_branching_formulas.pop()
+            else:
+                assert False, "204 -> Invalid Formula"
+        else:
+            assert False, "204 -> Invalid Formula"
+        
+        tableaux.new_formulas.append(curr_formula)
+        
+    elif len(tableaux.non_branching_formulas) > 0:
+        curr_formula = tableaux.non_branching_formulas.pop()
+        pattern = generatePattern(curr_formula)
+        
+        rule = next((rule for rule in non_branching_inference_rules if rule.symbol_pattern == pattern), None)
+        if rule is not None:
+            curr_formulas = rule.inference(curr_formula)
+            tableaux.new_formulas.extend(curr_formulas)
+            branches = tableaux_aggregator(tableaux, literal_set)
+            tableaux.new_formulas = tableaux.new_formulas[:-len(curr_formula)]
+        else:
+            assert False, "204 -> Error"
+        
+        tableaux.non_branching_formulas.append(curr_formula)
+    elif len(tableaux.branching_formulas) > 0:
+        curr_formula = tableaux.branching_formulas.pop()
+        pattern = generatePattern(curr_formula)
+        rule = next((rule for rule in branching_inference_rules if rule.symbol_pattern == pattern), None)
+        
+        if rule is not None:
+            new_formulas = rule.inference(curr_formula)
+            
+            for formula in new_formulas:
+                tableaux.new_formulas.append(formula)
+                branches.extend(tableaux_aggregator(tableaux, literal_set))
+                tableaux.new_formulas.pop()
+        else:
+            assert False, "204 -> Invalid Formula"
+        
+        tableaux.branching_formulas.append(curr_formula)
+    
+    else:
+        branches = [tableaux.literals]
+        
+    return branches
+
+def test_aggregator(formula: str):
+    results = f"testing formula: {formula}\n"
+    parse_success, parsed_formula = parse_infix_formula(formula)
+    classification = classify_propositional_logic_formula(parsed_formula)
+    
+    
+    
+    negated_formula = PropositionalLogicFormula(
+        SYMBOL_TYPE.NEGATION, [parsed_formula])
+    branches = tableaux_aggregator(AnalyticTableaux(new_formulas=[parsed_formula]), set())
+    neg_branches = tableaux_aggregator(AnalyticTableaux(new_formulas=[negated_formula]), set())
+    print(branches)
+    print()
+    print(neg_branches)
+    
+def main():
+    # law of excluded middle
+    formula_string = "A|~A"
+    print(test_aggregator(formula_string)[1])
+    # law of noncontradiction
+    formula_string = "A&~A"
+    print(test_aggregator(formula_string)[1])
+    # contingencies
+    formula_string = "A&B"
+    print(test_aggregator(formula_string)[1])
+    
+if __name__ == "__main__":
+    main()

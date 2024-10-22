@@ -156,7 +156,6 @@ def is_contradiction_tableaux(tableaux: AnalyticTableaux) -> Tuple[bool, bool]:
 
     return success, result
 
-
 def classify_propositional_logic_formula(formula: PropositionalLogicFormula) -> Literal["contingency", "tautology", "contradiction", "invalid formula", "tableaux error"]:
     """
     Classify the propositional logic formula as a tautology, contradiction, or contingency.
