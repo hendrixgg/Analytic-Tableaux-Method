@@ -61,7 +61,7 @@ def tableaux_aggregator(tableaux: AnalyticTableaux) -> list[set[PropositionalLog
             elif not isBranching(pattern):
 
                 tableaux.non_branching_formulas.append(curr_formula)
-                branches = tableaux_aggregator(pattern)
+                branches = tableaux_aggregator(tableaux)
                 tableaux.non_branching_formulas.pop()
             else:
                 assert False, "204 -> Invalid Formula"
@@ -80,7 +80,7 @@ def tableaux_aggregator(tableaux: AnalyticTableaux) -> list[set[PropositionalLog
             curr_formulas = rule.inference(curr_formula)
             tableaux.new_formulas.extend(curr_formulas)
             branches = tableaux_aggregator(tableaux)
-            tableaux.new_formulas = tableaux.new_formulas[:-len(curr_formula)]
+            tableaux.new_formulas = tableaux.new_formulas[:-len(curr_formulas)]
         else:
             assert False, "204 -> Error"
 
@@ -104,7 +104,7 @@ def tableaux_aggregator(tableaux: AnalyticTableaux) -> list[set[PropositionalLog
         tableaux.branching_formulas.append(curr_formula)
 
     else:
-        branches = [tableaux.literals]
+        branches = [set(tableaux.literals)]
 
     return branches
 
@@ -120,21 +120,22 @@ def test_aggregator(formula: str):
         new_formulas=[parsed_formula]))
     neg_branches = tableaux_aggregator(
         AnalyticTableaux(new_formulas=[negated_formula]))
-    print(branches)
-    print()
-    print(neg_branches)
+    results += f"{classification}\n"
+    results += f"original formula branches: {branches}\n"
+    results += f"negated formula branches: {neg_branches}\n"
+    return results
 
 
 def main():
     # law of excluded middle
     formula_string = "A|~A"
-    print(test_aggregator(formula_string)[1])
+    print(test_aggregator(formula_string))
     # law of noncontradiction
     formula_string = "A&~A"
-    print(test_aggregator(formula_string)[1])
+    print(test_aggregator(formula_string))
     # contingencies
     formula_string = "A&B"
-    print(test_aggregator(formula_string)[1])
+    print(test_aggregator(formula_string))
 
 
 if __name__ == "__main__":
