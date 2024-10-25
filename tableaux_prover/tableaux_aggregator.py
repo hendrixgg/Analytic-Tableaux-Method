@@ -109,17 +109,23 @@ def tableaux_aggregator(tableaux: AnalyticTableaux) -> list[set[PropositionalLog
     return branches
 
 
+def both_lists_of_tableaux_branches(formula: PropositionalLogicFormula) -> Tuple[list[set[PropositionalLogicFormula]], list[set[PropositionalLogicFormula]]]:
+    """
+    Given a formula, return the branches of the tableaux for the formula and the branches for the tableaux of its negation.
+    """
+    negated_formula = PropositionalLogicFormula(
+        SYMBOL_TYPE.NEGATION, [formula])
+    branches = tableaux_aggregator(AnalyticTableaux(new_formulas=[formula]))
+    neg_branches = tableaux_aggregator(
+        AnalyticTableaux(new_formulas=[negated_formula]))
+    return branches, neg_branches
+
+
 def test_aggregator(formula: str):
     results = f"testing formula: {formula}\n"
     parse_success, parsed_formula = parse_infix_formula(formula)
     classification = classify_propositional_logic_formula(parsed_formula)
-
-    negated_formula = PropositionalLogicFormula(
-        SYMBOL_TYPE.NEGATION, [parsed_formula])
-    branches = tableaux_aggregator(AnalyticTableaux(
-        new_formulas=[parsed_formula]))
-    neg_branches = tableaux_aggregator(
-        AnalyticTableaux(new_formulas=[negated_formula]))
+    branches, neg_branches = both_lists_of_tableaux_branches(parsed_formula)
     results += f"{classification}\n"
     results += f"original formula branches: {branches}\n"
     results += f"negated formula branches: {neg_branches}\n"
