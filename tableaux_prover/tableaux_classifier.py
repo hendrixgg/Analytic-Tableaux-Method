@@ -6,7 +6,6 @@ from inference_rules import *
 
 
 # all lists are stacks, so we can use pop() to get the last element and append() to add a new element.
-# TODO: find a way to store the branches as a list of constraints for the logic encoding, so that we can check if the branch is closed by checking if the opposite literal is in the list of constraints.
 class AnalyticTableaux():
     def __init__(self,
                  new_formulas: list[PropositionalLogicFormula] = [],
