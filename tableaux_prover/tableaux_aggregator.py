@@ -117,9 +117,9 @@ def test_aggregator(formula: str):
     negated_formula = PropositionalLogicFormula(
         SYMBOL_TYPE.NEGATION, [parsed_formula])
     branches = tableaux_aggregator(AnalyticTableaux(
-        new_formulas=[parsed_formula]), set())
+        new_formulas=[parsed_formula]))
     neg_branches = tableaux_aggregator(
-        AnalyticTableaux(new_formulas=[negated_formula]), set())
+        AnalyticTableaux(new_formulas=[negated_formula]))
     print(branches)
     print()
     print(neg_branches)
