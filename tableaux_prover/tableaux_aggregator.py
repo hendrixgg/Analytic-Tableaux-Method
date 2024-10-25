@@ -136,6 +136,21 @@ def main():
     # contingencies
     formula_string = "A&B"
     print(test_aggregator(formula_string))
+    # modus ponens
+    formula_string = "((A->B)&A)->B"
+    print(test_aggregator(formula_string))
+    # modus tollens
+    formula_string = "((A->B)&~B)->~A"
+    print(test_aggregator(formula_string))
+    # contrapositive
+    formula_string = "(A->B) -> ((~B) -> (~A))"
+    print(test_aggregator(formula_string))
+    # double negation
+    formula_string = "(A->~~A)&((~~A)->A)"
+    print(test_aggregator(formula_string))
+    # de morgan's laws
+    formula_string = "((~(A&B))->((~A)|(~B))) & (((~A)|(~B))->(~(A&B)))"
+    print(test_aggregator(formula_string))
 
 
 if __name__ == "__main__":
