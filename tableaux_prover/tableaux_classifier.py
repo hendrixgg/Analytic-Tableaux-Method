@@ -1,8 +1,8 @@
 from typing import List, Tuple, Literal, Callable
 
-from formula_symbols import *
-from propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
-from inference_rules import *
+from tableaux_prover.formula_symbols import *
+from tableaux_prover.propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
+from tableaux_prover.inference_rules import *
 
 
 # all lists are stacks, so we can use pop() to get the last element and append() to add a new element.

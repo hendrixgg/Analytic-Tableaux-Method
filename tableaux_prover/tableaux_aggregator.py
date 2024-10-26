@@ -1,9 +1,9 @@
 from typing import List, Tuple, Literal, Callable
 
-from formula_symbols import *
-from propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
-from inference_rules import *
-from tableaux_classifier import AnalyticTableaux, classify_propositional_logic_formula
+from tableaux_prover.formula_symbols import *
+from tableaux_prover.propositional_logic_formula import PropositionalLogicFormula, parse_infix_formula, stringify_formula
+from tableaux_prover.inference_rules import *
+from tableaux_prover.tableaux_classifier import AnalyticTableaux, classify_propositional_logic_formula
 
 
 def isAtomic(symbol: SYMBOL_TYPE) -> bool:

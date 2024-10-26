@@ -1,4 +1,4 @@
-from tableaux_prover.propositional_logic_formula import parse_infix_formula
+from tableaux_prover.propositional_logic_formula import parse_infix_formula, PropositionalLogicFormula, SYMBOL_TYPE, atomic_proposition_set
 from tableaux_prover.tableaux_aggregator import both_lists_of_tableaux_branches
 
 from bauhaus import Encoding, proposition, constraint
@@ -15,16 +15,25 @@ E = Encoding()
 
 # Need to have at least one formula that is long enough to create 50 branches.
 CANDIDATE_FORMULAS = [
-    # simple tautology (LEM)
+    # 0: simple tautology (LEM)
     "a | ~a",
-    # simplest contradiction
+    # 1: simplest contradiction
     "a & ~a",
-    # A simple contingent formula with 3 variables and 2 operators
+    # 2: A simple contingent formula with 3 variables and 2 operators
     "a & b | c",
-    # A complicated looking formula with 50 operators, using all the different connectives and variables
+    # 3: A complicated looking formula using all the different connectives and variables
     "((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d)))",
-    # An even more complicated and longer formula with even more variables and operators
+    # 4: An even more complicated and longer formula with even more variables and operators
     "((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d))) | ((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d)))",
+    # 5: a long disjunction of all the variables (contingency)
+    " | ".join([atom for atom in list(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]),
+    # 6: a long disjunction of all the variables plus a negation of one of them (tautology)
+    " | ".join([atom for atom in list(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " | ~a",
+    # 7: a long conjunction of all the variables plus a negation of one of them (contradiction)
+    " & ".join([atom for atom in list(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " & ~a",
 ]
 
 FORMULA_CLASSIFICATIONS = [
@@ -39,16 +48,6 @@ TABLEAUX_NAMES = [
 ]
 
 # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
-
-
-@proposition(E)
-class BasicPropositions:
-
-    def __init__(self, data):
-        self.data = data
-
-    def _prop_name(self):
-        return f"A.{self.data}"
 
 
 # Different classes for propositions are useful because this allows for more dynamic constraint creation
@@ -68,30 +67,24 @@ class FancyPropositions:
 
 
 # Call your variables whatever you want
-a = BasicPropositions("a")
-b = BasicPropositions("b")
-c = BasicPropositions("c")
-d = BasicPropositions("d")
-e = BasicPropositions("e")
-# At least one of these will be true
-x = FancyPropositions("x")
-y = FancyPropositions("y")
-z = FancyPropositions("z")
+a = FancyPropositions("a")
 
 
 @proposition(E)
-class AtomicProposition:
+class LiteralProposition:
 
-    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition_name: str):
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition: PropositionalLogicFormula):
         self.formula_id = formula_id
         self.tableaux_name = tableaux_name
         self.branch_number = branch_number
-        self.proposition_name = proposition_name
+        self.proposition_name = proposition
         assert formula_id in range(len(CANDIDATE_FORMULAS))
         assert tableaux_name in TABLEAUX_NAMES
+        assert proposition.symbol == SYMBOL_TYPE.PROPOSITION or (
+            proposition.symbol == SYMBOL_TYPE.NEGATION and proposition.children[0].symbol == SYMBOL_TYPE.PROPOSITION)
 
     def _prop_name(self):
-        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.atom.{self.proposition_name}"
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.literal.{self.proposition_name}"
 
 
 @proposition(E)
@@ -140,34 +133,92 @@ class FormulaClassification:
 #  what the expectations are.
 
 
-def example_theory():
-    # Add custom constraints by creating formulas with the variables you created.
-    E.add_constraint((a | b) & ~x)
-    # Implication
-    E.add_constraint(y >> z)
-    # Negate a formula
-    E.add_constraint(~(x & y))
-    # You can also add more customized "fancy" constraints. Use case: you don't want to enforce "exactly one"
-    # for every instance of BasicPropositions, but you want to enforce it for a, b, and c.:
-    constraint.add_exactly_one(E, a, b, c)
+def biconditional(a, b):
+    return (a >> b) & (b >> a)
 
+
+def example_theory():
+    TAUTOLOGY = a | ~a
+    CONTRADICTION = a & ~a
+    formula_id = 0
+    formula_str = CANDIDATE_FORMULAS[formula_id]
+    parse_success, formula = parse_infix_formula(formula_str)
+    assert parse_success
+    reg_branches, neg_branches = both_lists_of_tableaux_branches(formula)
+    # set of all possible literals in the tableaus for the formula
+    all_literal_pairs = {
+        (atom, PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [atom])) for atom in atomic_proposition_set(formula)}
+    for tableaux_name, branches in zip(TABLEAUX_NAMES, [reg_branches, neg_branches]):
+        conjunction_of_all_branches_closed = TAUTOLOGY
+        for branch_number, branch in enumerate(branches):
+            conjunction_of_all_branches_closed &= BranchClosed(
+                formula_id, tableaux_name, branch_number)
+            disjunction_of_conjunct_literal_pairs = CONTRADICTION
+            for atom, neg_atom in all_literal_pairs:
+                disjunction_of_conjunct_literal_pairs |= LiteralProposition(
+                    formula_id, tableaux_name, branch_number, atom) & LiteralProposition(formula_id, tableaux_name, branch_number, neg_atom)
+                if atom in branch:
+                    E.add_constraint(LiteralProposition(
+                        formula_id, tableaux_name, branch_number, atom))
+                else:
+                    E.add_constraint(~LiteralProposition(
+                        formula_id, tableaux_name, branch_number, atom))
+                if neg_atom in branch:
+                    E.add_constraint(LiteralProposition(
+                        formula_id, tableaux_name, branch_number, neg_atom))
+                else:
+                    E.add_constraint(~LiteralProposition(
+                        formula_id, tableaux_name, branch_number, neg_atom))
+            # The branch is closed iff at least one pair of contradicting literals is in the branch.
+            E.add_constraint(biconditional(BranchClosed(
+                formula_id, tableaux_name, branch_number), disjunction_of_conjunct_literal_pairs))
+        # The tableaux is closed iff all of it's branches are closed.
+        E.add_constraint(biconditional(
+            TableauxClosed(formula_id, tableaux_name), conjunction_of_all_branches_closed))
+
+    regular_tableaux_closed = TableauxClosed(formula_id, "regular_tablaux")
+    negated_tableaux_closed = TableauxClosed(formula_id, "negated_tableaux")
+    constraint.add_at_most_one(
+        E, regular_tableaux_closed, negated_tableaux_closed)
+    tautology_classification = FormulaClassification(
+        formula_id, "is_tautology")
+    contradiction_classification = FormulaClassification(
+        formula_id, "is_contradiction")
+    contingency_classification = FormulaClassification(
+        formula_id, "is_contingency")
+    constraint.add_exactly_one(E, tautology_classification,
+                               contradiction_classification, contingency_classification)
+    E.add_constraint(biconditional(tautology_classification, ~
+                     regular_tableaux_closed & negated_tableaux_closed))
+    E.add_constraint(biconditional(contradiction_classification,
+                     regular_tableaux_closed & ~negated_tableaux_closed))
+    E.add_constraint(biconditional(contingency_classification,
+                     ~regular_tableaux_closed & ~negated_tableaux_closed))
     return E
 
 
 if __name__ == "__main__":
-
     T = example_theory()
+
     # Don't compile until you're finished adding all your constraints!
+    print("Building theory...")
     T = T.compile()
+
+    theory_satisfiable = T.satisfiable()
+    theory_num_solutions = count_solutions(T)
+    theory_solution = T.solve()
     # After compilation (and only after), you can check some of the properties
     # of your model:
-    print("\nSatisfiable: %s" % T.satisfiable())
-    print("# Solutions: %d" % count_solutions(T))
-    print("   Solution: %s" % T.solve())
+    print("\nSatisfiable: %s" % theory_satisfiable)
+    print("# Solutions: %d" % theory_num_solutions)
+    # print("   Solution: %s" % theory_solution)
+    print(f"# Variables: {len(T.vars())}")
+    print(f"# Constraints: {T.size()}")
 
-    print("\nVariable likelihoods:")
-    for v, vn in zip([a, b, c, x, y, z], 'abcxyz'):
-        # Ensure that you only send these functions NNF formulas
-        # Literals are compiled to NNF here
-        print(" %s: %.2f" % (vn, likelihood(T, v)))
+    print("\nFormula Classifications:")
+    for formula_id in range(len(CANDIDATE_FORMULAS)):
+        print(f"Formula {formula_id}: {CANDIDATE_FORMULAS[formula_id]}")
+        for classification in FORMULA_CLASSIFICATIONS:
+            print(
+                f"\tformula {formula_id} is {classification}: {theory_solution.get(FormulaClassification(formula_id, classification), "?")}")
     print()

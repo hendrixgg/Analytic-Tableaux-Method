@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Literal, Callable
 
-from formula_symbols import *
+from tableaux_prover.formula_symbols import *
 
 
 @dataclass
@@ -39,6 +39,20 @@ class PropositionalLogicFormula:
 
     def __repr__(self):
         return stringify_formula(self, "prefix")[1]
+
+
+def atomic_proposition_set(formula: PropositionalLogicFormula) -> set[PropositionalLogicFormula]:
+    """
+    Returns the set of atomic propositions in the formula.
+    """
+    if formula.symbol == SYMBOL_TYPE.PROPOSITION:
+        return {formula}
+    elif formula.symbol == SYMBOL_TYPE.NEGATION:
+        return atomic_proposition_set(formula.children[0])
+    elif formula.symbol in CONNECTIVES:
+        return atomic_proposition_set(formula.children[0]) | atomic_proposition_set(formula.children[1])
+    else:
+        return set()
 
 
 def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefix", "infix", "postfix"]) -> Tuple[bool, str]:
@@ -225,5 +239,6 @@ def parse_infix_formula(formula: str) -> Tuple[bool, PropositionalLogicFormula]:
         success = True
 
     return (success, result_formula)
+
 
 # TODO: create test cases for the parser.
