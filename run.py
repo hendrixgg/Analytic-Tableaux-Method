@@ -140,7 +140,7 @@ def biconditional(a, b):
 def example_theory():
     TAUTOLOGY = a | ~a
     CONTRADICTION = a & ~a
-    formula_id = 7
+    formula_id = 0
     formula_str = CANDIDATE_FORMULAS[formula_id]
     parse_success, formula = parse_infix_formula(formula_str)
     assert parse_success
