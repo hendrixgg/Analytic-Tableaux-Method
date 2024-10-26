@@ -1,3 +1,5 @@
+from tableaux_prover.propositional_logic_formula import parse_infix_formula
+from tableaux_prover.tableaux_aggregator import both_lists_of_tableaux_branches
 
 from bauhaus import Encoding, proposition, constraint
 from bauhaus.utils import count_solutions, likelihood
@@ -6,10 +8,39 @@ from bauhaus.utils import count_solutions, likelihood
 from nnf import config
 config.sat_backend = "kissat"
 
+
 # Encoding that will store all of your constraints
 E = Encoding()
 
+
+# Need to have at least one formula that is long enough to create 50 branches.
+CANDIDATE_FORMULAS = [
+    # simple tautology (LEM)
+    "a | ~a",
+    # simplest contradiction
+    "a & ~a",
+    # A simple contingent formula with 3 variables and 2 operators
+    "a & b | c",
+    # A complicated looking formula with 50 operators, using all the different connectives and variables
+    "((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d)))",
+    # An even more complicated and longer formula with even more variables and operators
+    "((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d))) | ((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d)))",
+]
+
+FORMULA_CLASSIFICATIONS = [
+    "is_tautology",
+    "is_contradiction",
+    "is_contingency",
+]
+
+TABLEAUX_NAMES = [
+    "regular_tablaux",
+    "negated_tableaux",
+]
+
 # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
+
+
 @proposition(E)
 class BasicPropositions:
 
@@ -35,9 +66,10 @@ class FancyPropositions:
     def _prop_name(self):
         return f"A.{self.data}"
 
+
 # Call your variables whatever you want
 a = BasicPropositions("a")
-b = BasicPropositions("b")   
+b = BasicPropositions("b")
 c = BasicPropositions("c")
 d = BasicPropositions("d")
 e = BasicPropositions("e")
@@ -47,13 +79,69 @@ y = FancyPropositions("y")
 z = FancyPropositions("z")
 
 
+@proposition(E)
+class AtomicProposition:
+
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition_name: str):
+        self.formula_id = formula_id
+        self.tableaux_name = tableaux_name
+        self.branch_number = branch_number
+        self.proposition_name = proposition_name
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.atom.{self.proposition_name}"
+
+
+@proposition(E)
+class BranchClosed:
+
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int):
+        self.formula_id = formula_id
+        self.tableaux_name = tableaux_name
+        self.branch_number = branch_number
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.closed"
+
+
+@proposition(E)
+class TableauxClosed:
+
+    def __init__(self, formula_id: int, tableaux_name: str):
+        self.formula_id = formula_id
+        self.tableaux_name = tableaux_name
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.closed"
+
+
+@proposition(E)
+class FormulaClassification:
+
+    def __init__(self, formula_id: int, classification: str):
+        self.formula_id = formula_id
+        self.classification = classification
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert classification in FORMULA_CLASSIFICATIONS
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.classification.{self.classification}"
+
 # Build an example full theory for your setting and return it.
 #
 #  There should be at least 10 variables, and a sufficiently large formula to describe it (>50 operators).
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
+
+
 def example_theory():
-    # Add custom constraints by creating formulas with the variables you created. 
+    # Add custom constraints by creating formulas with the variables you created.
     E.add_constraint((a | b) & ~x)
     # Implication
     E.add_constraint(y >> z)
@@ -78,7 +166,7 @@ if __name__ == "__main__":
     print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
+    for v, vn in zip([a, b, c, x, y, z], 'abcxyz'):
         # Ensure that you only send these functions NNF formulas
         # Literals are compiled to NNF here
         print(" %s: %.2f" % (vn, likelihood(T, v)))
