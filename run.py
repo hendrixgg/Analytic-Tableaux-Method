@@ -219,6 +219,5 @@ if __name__ == "__main__":
     for formula_id in range(len(CANDIDATE_FORMULAS)):
         print(f"Formula {formula_id}: {CANDIDATE_FORMULAS[formula_id]}")
         for classification in FORMULA_CLASSIFICATIONS:
-            print(
-                f"\tformula {formula_id} is {classification}: {theory_solution.get(FormulaClassification(formula_id, classification), "?")}")
+            print(f"\tformula {formula_id} is {classification}: {theory_solution.get(FormulaClassification(formula_id, classification), '?')}")
     print()
