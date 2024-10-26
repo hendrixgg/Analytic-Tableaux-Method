@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Literal, Callable
 
-from formula_symbols import SYMBOL_TYPE
-from propositional_logic_formula import PropositionalLogicFormula
+from tableaux_prover.formula_symbols import SYMBOL_TYPE
+from tableaux_prover.propositional_logic_formula import PropositionalLogicFormula
 
 
 # TODO: Probably should have some test to show that the inference patterns are exhaustive and mutually exclusive.

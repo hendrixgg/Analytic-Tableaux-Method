@@ -1,1 +1,1 @@
-from tableaux_classifier import *
+from tableaux_prover import *
