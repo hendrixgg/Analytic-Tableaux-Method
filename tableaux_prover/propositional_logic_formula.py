@@ -41,12 +41,12 @@ class PropositionalLogicFormula:
         return stringify_formula(self, "prefix")[1]
 
 
-def atomic_proposition_set(formula: PropositionalLogicFormula) -> set[str]:
+def atomic_proposition_set(formula: PropositionalLogicFormula) -> set[PropositionalLogicFormula]:
     """
     Returns the set of atomic propositions in the formula.
     """
     if formula.symbol == SYMBOL_TYPE.PROPOSITION:
-        return {formula.id}
+        return {formula}
     elif formula.symbol == SYMBOL_TYPE.NEGATION:
         return atomic_proposition_set(formula.children[0])
     elif formula.symbol in CONNECTIVES:
