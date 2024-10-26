@@ -20,7 +20,7 @@ CANDIDATE_FORMULAS = [
     # 1: simplest contradiction
     "a & ~a",
     # 2: A simple contingent formula with 3 variables and 2 operators
-    "a & b | c",
+    "(a & b) | c",
     # 3: A complicated looking formula using all the different connectives and variables
     "((a & b) | (c & d)) >> (x | y) & ~(z | (a & b) & (c & d) & (x | y) & ~(z | (a & b) & (c & d)))",
     # 4: An even more complicated and longer formula with even more variables and operators
@@ -37,9 +37,9 @@ CANDIDATE_FORMULAS = [
 ]
 
 FORMULA_CLASSIFICATIONS = [
-    "is_tautology",
-    "is_contradiction",
-    "is_contingency",
+    "tautology",
+    "contradiction",
+    "contingency",
 ]
 
 TABLEAUX_NAMES = [
@@ -140,7 +140,7 @@ def biconditional(a, b):
 def example_theory():
     TAUTOLOGY = a | ~a
     CONTRADICTION = a & ~a
-    formula_id = 0
+    formula_id = 7
     formula_str = CANDIDATE_FORMULAS[formula_id]
     parse_success, formula = parse_infix_formula(formula_str)
     assert parse_success
@@ -181,11 +181,11 @@ def example_theory():
     constraint.add_at_most_one(
         E, regular_tableaux_closed, negated_tableaux_closed)
     tautology_classification = FormulaClassification(
-        formula_id, "is_tautology")
+        formula_id, "tautology")
     contradiction_classification = FormulaClassification(
-        formula_id, "is_contradiction")
+        formula_id, "contradiction")
     contingency_classification = FormulaClassification(
-        formula_id, "is_contingency")
+        formula_id, "contingency")
     constraint.add_exactly_one(E, tautology_classification,
                                contradiction_classification, contingency_classification)
     E.add_constraint(biconditional(tautology_classification, ~
@@ -198,10 +198,11 @@ def example_theory():
 
 
 if __name__ == "__main__":
+    print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
     T = example_theory()
 
     # Don't compile until you're finished adding all your constraints!
-    print("Building theory...")
+    print("Computing the Solution...")
     T = T.compile()
 
     theory_satisfiable = T.satisfiable()
@@ -216,8 +217,13 @@ if __name__ == "__main__":
     print(f"# Constraints: {T.size()}")
 
     print("\nFormula Classifications:")
-    for formula_id in range(len(CANDIDATE_FORMULAS)):
-        print(f"Formula {formula_id}: {CANDIDATE_FORMULAS[formula_id]}")
+    for formula_id, formula_str in enumerate(CANDIDATE_FORMULAS):
+        if theory_solution.get(FormulaClassification(formula_id, FORMULA_CLASSIFICATIONS[0])) is None:
+            continue
+        print(f"Formula {formula_id}: {formula_str}")
         for classification in FORMULA_CLASSIFICATIONS:
-            print(f"\tformula {formula_id} is {classification}: {theory_solution.get(FormulaClassification(formula_id, classification), '?')}")
+            formula_classification = FormulaClassification(
+                formula_id, classification)
+            print(
+                f"\t{formula_classification}: {theory_solution.get(formula_classification, '?')}")
     print()
