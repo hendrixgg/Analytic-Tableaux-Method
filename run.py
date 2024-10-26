@@ -33,6 +33,11 @@ FORMULA_CLASSIFICATIONS = [
     "is_contingency",
 ]
 
+TABLEAUX_NAMES = [
+    "regular_tablaux",
+    "negated_tableaux",
+]
+
 # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
 
 
@@ -77,49 +82,56 @@ z = FancyPropositions("z")
 @proposition(E)
 class AtomicProposition:
 
-    def __init__(self, formula: str, tableaux_name: str, branch_number: int, proposition_name: str):
-        self.formula = formula
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition_name: str):
+        self.formula_id = formula_id
         self.tableaux_name = tableaux_name
         self.branch_number = branch_number
         self.proposition_name = proposition_name
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
 
     def _prop_name(self):
-        return f"formula.{self.formula}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.atom.{self.data}"
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.atom.{self.proposition_name}"
 
 
 @proposition(E)
 class BranchClosed:
 
-    def __init__(self, formula: str, tableaux_name: str, branch_number: int):
-        self.formula = formula
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int):
+        self.formula_id = formula_id
         self.tableaux_name = tableaux_name
         self.branch_number = branch_number
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
 
     def _prop_name(self):
-        return f"formula.{self.formula}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.closed"
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.closed"
 
 
 @proposition(E)
 class TableauxClosed:
 
-    def __init__(self, formula: str, tableaux_name: str):
-        self.formula = formula
+    def __init__(self, formula_id: int, tableaux_name: str):
+        self.formula_id = formula_id
         self.tableaux_name = tableaux_name
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
 
     def _prop_name(self):
-        return f"formula.{self.formula}.tableaux.{self.tableaux_name}.closed"
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.closed"
 
 
 @proposition(E)
 class FormulaClassification:
 
-    def __init__(self, formula: str, classification: str):
-        self.formula = formula
+    def __init__(self, formula_id: int, classification: str):
+        self.formula_id = formula_id
         self.classification = classification
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
         assert classification in FORMULA_CLASSIFICATIONS
 
     def _prop_name(self):
-        return f"formula.{self.formula}.classification.{self.classification}"
+        return f"formula.{self.formula_id}.classification.{self.classification}"
 
 # Build an example full theory for your setting and return it.
 #
