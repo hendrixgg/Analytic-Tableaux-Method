@@ -57,7 +57,7 @@ def atomic_proposition_set(formula: PropositionalLogicFormula) -> set[Propositio
 
 def stringify_formula(formula: PropositionalLogicFormula, format: Literal["prefix", "infix", "postfix"]) -> Tuple[bool, str]:
     """
-    Converts the formula from a list of integers to a string of symbols.
+    Converts the formula to a string of symbols.
 
     Args:
     formula (list): The formula to convert.
