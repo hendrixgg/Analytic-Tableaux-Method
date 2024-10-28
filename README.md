@@ -9,6 +9,14 @@ Change this README.md file to summarize your project, and provide pointers to th
 * `documents`: Contains folders for both of your draft and final submissions. README.md files are included in both.
 * `run.py`: General wrapper script that you can choose to use or not. Only requirement is that you implement the one function inside of there for the auto-checks.
 * `test.py`: Run this file to confirm that your submission has everything required. This essentially just means it will check for the right files and sufficient theory size.
+* `tableaux_prover`: Contains a python module with the necessary components to employ the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+    * `formula_symbols.py`: Contains relevant datastructures, constants, and functions for working with symbols that make up propositional logic formulas.
+    * `inference_rules.py`: Contains the InferenceRule class and the necessary information to model the inference rules used in the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+    * `propositional_logic_formula.py`: Contains the PropositionalLogicFormula class, string conversion functions and one function to return all of the atomic propositions contained within a PropositionalLogicFormula object.
+    * `tableaux_aggregator.py`: Contains a functoin to generate the branches for the tableau of a formula and some associated helper functions.
+    * `tableaux_classifier.py`: Contains a function to classify a PropositionalLogicFormula as either tautology, contradiciton, or contingency using the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+
+
 
 ## Running With Docker
 
