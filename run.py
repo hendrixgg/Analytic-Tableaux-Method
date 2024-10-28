@@ -68,6 +68,8 @@ class FancyPropositions:
 
 # Call your variables whatever you want
 a = FancyPropositions("a")
+TAUTOLOGY = a | ~a
+CONTRADICTION = a & ~a
 
 
 @proposition(E)
@@ -137,23 +139,26 @@ def biconditional(a, b):
     return (a >> b) & (b >> a)
 
 
-def example_theory():
-    TAUTOLOGY = a | ~a
-    CONTRADICTION = a & ~a
-    formula_id = 7
+def example_theory(formula_id: int = 0):
     formula_str = CANDIDATE_FORMULAS[formula_id]
     parse_success, formula = parse_infix_formula(formula_str)
     assert parse_success
     reg_branches, neg_branches = both_lists_of_tableaux_branches(formula)
-    # set of all possible literals in the tableaus for the formula
+    # Set of all possible literals in the tableaus for the formula.
     all_literal_pairs = {
         (atom, PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [atom])) for atom in atomic_proposition_set(formula)}
+    # Iterate over each tableaux for an associated formula.
     for tableaux_name, branches in zip(TABLEAUX_NAMES, [reg_branches, neg_branches]):
+        # Iterate over each branch in the tableaux.
+        # Iteratively build the conjunction of all the branch closed propositions.
         conjunction_of_all_branches_closed = TAUTOLOGY
         for branch_number, branch in enumerate(branches):
             conjunction_of_all_branches_closed &= BranchClosed(
                 formula_id, tableaux_name, branch_number)
+            # Iterate over each pair of literals in the branch.
+            # Iteratively build the disjunction of all the pairs of contradicting literals.
             disjunction_of_conjunct_literal_pairs = CONTRADICTION
+            # Add constraints to specify the literals present in the branch.
             for atom, neg_atom in all_literal_pairs:
                 disjunction_of_conjunct_literal_pairs |= LiteralProposition(
                     formula_id, tableaux_name, branch_number, atom) & LiteralProposition(formula_id, tableaux_name, branch_number, neg_atom)
@@ -178,6 +183,8 @@ def example_theory():
 
     regular_tableaux_closed = TableauxClosed(formula_id, "regular_tablaux")
     negated_tableaux_closed = TableauxClosed(formula_id, "negated_tableaux")
+    # If both of the teablaux must be closed for this to work, then there must have been an error either
+    # in the tableaux generation or in the constraints that represent it.
     constraint.add_at_most_one(
         E, regular_tableaux_closed, negated_tableaux_closed)
     tautology_classification = FormulaClassification(
@@ -186,12 +193,16 @@ def example_theory():
         formula_id, "contradiction")
     contingency_classification = FormulaClassification(
         formula_id, "contingency")
+    # These classifications are mutually exclusive.
     constraint.add_exactly_one(E, tautology_classification,
                                contradiction_classification, contingency_classification)
+    # The formula is a tautology iff the regular tableaux is closed and the negated tableaux is closed.
     E.add_constraint(biconditional(tautology_classification, ~
                      regular_tableaux_closed & negated_tableaux_closed))
+    # The formula is a contradiction iff the regular tableaux is closed and the negated tableaux is not closed.
     E.add_constraint(biconditional(contradiction_classification,
                      regular_tableaux_closed & ~negated_tableaux_closed))
+    # The formula is a contingency iff the regular tableaux is not closed and the negated tableaux is not closed.
     E.add_constraint(biconditional(contingency_classification,
                      ~regular_tableaux_closed & ~negated_tableaux_closed))
     return E
