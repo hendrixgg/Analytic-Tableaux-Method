@@ -1,5 +1,7 @@
 # CISC/CMPE 204 Modelling Project
 
+https://github.com/hendrixgg/Analytic-Tableaux-Method
+
 Welcome to the major project for CISC/CMPE 204!
 
 Change this README.md file to summarize your project, and provide pointers to the general structure of the repository. How you organize and build things (which files, how you structure things, etc) is entirely up to you! The only things you must keep in place are what is already listed in the **Structure** section below.
@@ -50,7 +52,7 @@ If you happen to be building and running things on a Mac with an M1 chip, then y
 For example, the build command would become:
 
 ```
-docker build --platform linux/x86_64 -t cisc204 .
+docker build --platform linux/x86_64 -t analytic-tableaux-method .
 ```
 
 ### Mount on Different OS'
@@ -64,5 +66,5 @@ In the run script above, the `-v $(pwd):/PROJECT` is used to mount the current d
 Finally, if you are in a folder with a bunch of spaces in the absolute path, then it will break things unless you "quote" the current directory like this (e.g., on Windows CMD):
 
 ```
-docker run -it -v "%cd%":/PROJECT cisc204
+docker run -it -v "%cd%":/PROJECT analytic-tableaux-method
 ```
