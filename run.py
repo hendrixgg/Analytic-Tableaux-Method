@@ -223,7 +223,7 @@ if __name__ == "__main__":
     # of your model:
     print("\nSatisfiable: %s" % theory_satisfiable)
     print("# Solutions: %d" % theory_num_solutions)
-    # print("   Solution: %s" % theory_solution)
+    print("   Solution: %s" % theory_solution)
     print(f"# Variables: {len(T.vars())}")
     print(f"# Constraints: {T.size()}")
 
