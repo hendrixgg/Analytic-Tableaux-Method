@@ -237,4 +237,8 @@ if __name__ == "__main__":
                 formula_id, classification)
             print(
                 f"\t{formula_classification}: {theory_solution.get(formula_classification, '?')}")
+            # TODO: Print extra properties about the formula classification.
+            # If tautology, then say which variables in the negated tableaux cause the contradiction.
+            # If contradiction, then say which variables in the regular tableaux cause the contradiction.
+            # If contingency, then say which variables the formula is contingent on.
     print()
