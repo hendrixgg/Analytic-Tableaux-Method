@@ -143,8 +143,10 @@ def example_theory(formula_id: int = 0):
     formula_str = CANDIDATE_FORMULAS[formula_id]
     parse_success, formula = parse_infix_formula(formula_str)
     assert parse_success
+    global reg_branches, neg_branches
     reg_branches, neg_branches = both_lists_of_tableaux_branches(formula)
     # Set of all possible literals in the tableaus for the formula.
+    global all_literal_pairs
     all_literal_pairs = {
         (atom, PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [atom])) for atom in atomic_proposition_set(formula)}
     # Iterate over each tableaux for an associated formula.
@@ -211,6 +213,21 @@ def example_theory(formula_id: int = 0):
 if __name__ == "__main__":
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
     T = example_theory()
+
+    print(all_literal_pairs)
+    print(reg_branches)
+    print(neg_branches)
+    
+    contradiction_factors = []
+    contigency_factors = all_literal_pairs
+    for branch in reg_branches:
+        for atom, atom_neg in contigency_factors:
+            if atom in branch and atom_neg in branch:
+                contigency_factors.remove((atom, atom_neg))
+                contradiction_factors.append((atom, atom_neg))
+                break
+    print(contradiction_factors)
+    print(contigency_factors)
 
     # Don't compile until you're finished adding all your constraints!
     print("Computing the Solution...")
