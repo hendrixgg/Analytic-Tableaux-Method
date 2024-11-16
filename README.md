@@ -1,5 +1,7 @@
 # CISC/CMPE 204 Modelling Project
 
+https://github.com/hendrixgg/Analytic-Tableaux-Method
+
 Welcome to the major project for CISC/CMPE 204!
 
 Change this README.md file to summarize your project, and provide pointers to the general structure of the repository. How you organize and build things (which files, how you structure things, etc) is entirely up to you! The only things you must keep in place are what is already listed in the **Structure** section below.
@@ -9,6 +11,14 @@ Change this README.md file to summarize your project, and provide pointers to th
 * `documents`: Contains folders for both of your draft and final submissions. README.md files are included in both.
 * `run.py`: General wrapper script that you can choose to use or not. Only requirement is that you implement the one function inside of there for the auto-checks.
 * `test.py`: Run this file to confirm that your submission has everything required. This essentially just means it will check for the right files and sufficient theory size.
+* `tableaux_prover`: Contains a python module with the necessary components to employ the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+    * `formula_symbols.py`: Contains relevant datastructures, constants, and functions for working with symbols that make up propositional logic formulas.
+    * `inference_rules.py`: Contains the InferenceRule class and the necessary information to model the inference rules used in the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+    * `propositional_logic_formula.py`: Contains the PropositionalLogicFormula class, string conversion functions and one function to return all of the atomic propositions contained within a PropositionalLogicFormula object.
+    * `tableaux_aggregator.py`: Contains a functoin to generate the branches for the tableau of a formula and some associated helper functions.
+    * `tableaux_classifier.py`: Contains a function to classify a PropositionalLogicFormula as either tautology, contradiciton, or contingency using the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
+
+
 
 ## Running With Docker
 
@@ -42,7 +52,7 @@ If you happen to be building and running things on a Mac with an M1 chip, then y
 For example, the build command would become:
 
 ```
-docker build --platform linux/x86_64 -t cisc204 .
+docker build --platform linux/x86_64 -t analytic-tableaux-method .
 ```
 
 ### Mount on Different OS'
@@ -56,5 +66,5 @@ In the run script above, the `-v $(pwd):/PROJECT` is used to mount the current d
 Finally, if you are in a folder with a bunch of spaces in the absolute path, then it will break things unless you "quote" the current directory like this (e.g., on Windows CMD):
 
 ```
-docker run -it -v "%cd%":/PROJECT cisc204
+docker run -it -v "%cd%":/PROJECT analytic-tableaux-method
 ```
