@@ -30,10 +30,13 @@ CANDIDATE_FORMULAS = [
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]),
     # 6: a long disjunction of all the variables plus a negation of one of them (tautology)
     " | ".join([atom for atom in list(
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " | ~a",
-    # 7: a long conjunction of all the variables plus a negation of one of them (contradiction)
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " | (~a)",
+    # 7: a long disjunction of all the variables plus a negation of one of them (tautology)
+    " | ".join([atom for atom in list(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " | (~a) | (~b)",
+    # 8: a long conjunction of all the variables plus a negation of one of them (contradiction)
     " & ".join([atom for atom in list(
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " & ~a",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " & (~a)",
 ]
 
 FORMULA_CLASSIFICATIONS = [
@@ -73,7 +76,7 @@ CONTRADICTION = a & ~a
 
 
 @proposition(E)
-class LiteralProposition:
+class BranchContainsLiteral:
 
     def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition: PropositionalLogicFormula):
         self.formula_id = formula_id
@@ -86,7 +89,40 @@ class LiteralProposition:
             proposition.symbol == SYMBOL_TYPE.NEGATION and proposition.children[0].symbol == SYMBOL_TYPE.PROPOSITION)
 
     def _prop_name(self):
-        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.literal.{self.proposition_name}"
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.contains.literal.{self.proposition_name}"
+
+
+@proposition(E)
+class BranchContingentOnLiteral:
+
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, proposition: PropositionalLogicFormula):
+        self.formula_id = formula_id
+        self.tableaux_name = tableaux_name
+        self.branch_number = branch_number
+        self.proposition_name = proposition
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
+        assert proposition.symbol == SYMBOL_TYPE.PROPOSITION or (
+            proposition.symbol == SYMBOL_TYPE.NEGATION and proposition.children[0].symbol == SYMBOL_TYPE.PROPOSITION)
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.contingent_on.literal.{self.proposition_name}"
+
+
+@proposition(E)
+class BranchClosedOnVariable:
+
+    def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, variable: PropositionalLogicFormula):
+        self.formula_id = formula_id
+        self.tableaux_name = tableaux_name
+        self.branch_number = branch_number
+        self.variable = variable
+        assert formula_id in range(len(CANDIDATE_FORMULAS))
+        assert tableaux_name in TABLEAUX_NAMES
+        assert variable.symbol == SYMBOL_TYPE.PROPOSITION
+
+    def _prop_name(self):
+        return f"formula.{self.formula_id}.tableaux.{self.tableaux_name}.branch.{self.branch_number}.closed_on.variable.{self.variable}"
 
 
 @proposition(E)
@@ -160,20 +196,31 @@ def example_theory(formula_id: int = 0):
             disjunction_of_conjunct_literal_pairs = CONTRADICTION
             # Add constraints to specify the literals present in the branch.
             for atom, neg_atom in all_literal_pairs:
-                disjunction_of_conjunct_literal_pairs |= LiteralProposition(
-                    formula_id, tableaux_name, branch_number, atom) & LiteralProposition(formula_id, tableaux_name, branch_number, neg_atom)
+                disjunction_of_conjunct_literal_pairs |= BranchClosedOnVariable(
+                    formula_id, tableaux_name, branch_number, atom)
+                # Add constraints to specify the variables that the branch is closed on.
+                E.add_constraint(biconditional(BranchClosedOnVariable(
+                    formula_id, tableaux_name, branch_number, atom), BranchContainsLiteral(formula_id, tableaux_name, branch_number, atom) & BranchContainsLiteral(formula_id, tableaux_name, branch_number, neg_atom)))
+
+                # Add constraints to specify the variables that the branch is contingent on.
+                E.add_constraint(biconditional(
+                    BranchContingentOnLiteral(formula_id, tableaux_name, branch_number, atom), BranchContainsLiteral(formula_id, tableaux_name, branch_number, atom) & ~BranchClosed(formula_id, tableaux_name, branch_number)))
+                E.add_constraint(biconditional(
+                    BranchContingentOnLiteral(formula_id, tableaux_name, branch_number, neg_atom), BranchContainsLiteral(formula_id, tableaux_name, branch_number, neg_atom) & ~BranchClosed(formula_id, tableaux_name, branch_number)))
+
                 if atom in branch:
-                    E.add_constraint(LiteralProposition(
+                    E.add_constraint(BranchContainsLiteral(
                         formula_id, tableaux_name, branch_number, atom))
                 else:
-                    E.add_constraint(~LiteralProposition(
+                    E.add_constraint(~BranchContainsLiteral(
                         formula_id, tableaux_name, branch_number, atom))
                 if neg_atom in branch:
-                    E.add_constraint(LiteralProposition(
+                    E.add_constraint(BranchContainsLiteral(
                         formula_id, tableaux_name, branch_number, neg_atom))
                 else:
-                    E.add_constraint(~LiteralProposition(
+                    E.add_constraint(~BranchContainsLiteral(
                         formula_id, tableaux_name, branch_number, neg_atom))
+
             # The branch is closed iff at least one pair of contradicting literals is in the branch.
             E.add_constraint(biconditional(BranchClosed(
                 formula_id, tableaux_name, branch_number), disjunction_of_conjunct_literal_pairs))
@@ -210,7 +257,7 @@ def example_theory(formula_id: int = 0):
 
 if __name__ == "__main__":
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
-    T = example_theory()
+    T = example_theory(2)
 
     # Don't compile until you're finished adding all your constraints!
     print("Computing the Solution...")
@@ -223,7 +270,7 @@ if __name__ == "__main__":
     # of your model:
     print("\nSatisfiable: %s" % theory_satisfiable)
     print("# Solutions: %d" % theory_num_solutions)
-    print("   Solution: %s" % theory_solution)
+    # print("   Solution: %s" % theory_solution)
     print(f"# Variables: {len(T.vars())}")
     print(f"# Constraints: {T.size()}")
 
@@ -231,14 +278,44 @@ if __name__ == "__main__":
     for formula_id, formula_str in enumerate(CANDIDATE_FORMULAS):
         if theory_solution.get(FormulaClassification(formula_id, FORMULA_CLASSIFICATIONS[0])) is None:
             continue
+        encoded_formula = parse_infix_formula(formula_str)[1]
+        regular_tableaux_branches, negated_tableaux_branches = both_lists_of_tableaux_branches(
+            encoded_formula)
+        num_regular_tableaux_branches = len(regular_tableaux_branches)
+        num_negated_tableaux_branches = len(negated_tableaux_branches)
+        # List of disjunctions of all conjunct literals, one for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
+        all_formula_literals = [literal for literal in atomic_proposition_set(
+            encoded_formula)] + [PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [literal]) for literal in atomic_proposition_set(encoded_formula)]
+        contingently_true_conjuncts_of_literals = [
+            [literal for literal in all_formula_literals if theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[0], branch_number, literal))] for branch_number in range(num_regular_tableaux_branches) if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[0], branch_number))]
+        # List of disjunctions of all conjunct literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
+        contingently_false_conjuncts_of_literals = [
+            [literal for literal in all_formula_literals if theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[1], branch_number, literal))] for branch_number in range(num_negated_tableaux_branches) if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[1], branch_number))]
+        # List of lists of variables for each branch in the negated tableaux. In each list contains the variables which have contradicting literal pairs.
+        tautology_causing_variables = [[atom for atom in atomic_proposition_set(encoded_formula) if theory_solution.get(
+            BranchClosedOnVariable(formula_id, "negated_tableaux", branch_number, atom))] for branch_number in range(num_negated_tableaux_branches)]
+        # List of lists of variables for each branch in the regular tableaux. In each list contains the variables which have contradicting literal pairs.
+        contradiction_causing_variables = [[atom for atom in atomic_proposition_set(encoded_formula) if theory_solution.get(
+            BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[0], branch_number, atom))] for branch_number in range(num_regular_tableaux_branches)]
         print(f"Formula {formula_id}: {formula_str}")
         for classification in FORMULA_CLASSIFICATIONS:
             formula_classification = FormulaClassification(
                 formula_id, classification)
             print(
                 f"\t{formula_classification}: {theory_solution.get(formula_classification, '?')}")
-            # TODO: Print extra properties about the formula classification.
             # If tautology, then say which variables in the negated tableaux cause the contradiction.
+            if classification == "tautology" and theory_solution.get(formula_classification):
+                print(
+                    f"\t\tTautology caused by: {tautology_causing_variables}")
             # If contradiction, then say which variables in the regular tableaux cause the contradiction.
+            if classification == "contradiction" and theory_solution.get(formula_classification):
+                print(
+                    f"\t\tContradiction caused by: {contradiction_causing_variables}")
             # If contingency, then say which variables the formula is contingent on.
+            if classification == "contingency" and theory_solution.get(formula_classification):
+                print(
+                    f"\t\tContingently true on: {contingently_true_conjuncts_of_literals}")
+                print(
+                    f"\t\tContingently false on: {contingently_false_conjuncts_of_literals}")
+
     print()
