@@ -296,22 +296,26 @@ if __name__ == "__main__":
                     SYMBOL_TYPE.NEGATION, [literal])
         all_formula_literals = list(generate_formula_literals())
 
-        def non_closed_branches(tableaux_id):
+        def non_closed_branches(tableaux_id: int):
             for branch_number in range(len(tableaux_branches[tableaux_id])):
                 if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number)):
                     yield branch_number
 
-        def branch_contingent_on_literal(tableaux_id, branch_number, literal):
+        def branch_contingent_on_literal(tableaux_id: int, branch_number: int, literal):
             return theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number, literal), False)
 
-        def literals_branch_contingent_on(tableaux_id, branch_number):
+        def literals_branch_contingent_on(tableaux_id: int, branch_number: int):
             return filter(lambda l: branch_contingent_on_literal(tableaux_id, branch_number, l), all_formula_literals)
+
+        def lists_of_contingencies_for_branches(tableaux_id: int):
+            for branch_number in non_closed_branches(tableaux_id):
+                yield list(literals_branch_contingent_on(tableaux_id, branch_number))
         # List representing a disjunction of conjunctions of literals, one conjunction for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
-        contingently_true_conjuncts_of_literals = [
-            list(literals_branch_contingent_on(0, branch_number)) for branch_number in non_closed_branches(0)]
+        contingently_true_conjuncts_of_literals = list(
+            lists_of_contingencies_for_branches(0))
         # List representing a disjunctions of conjunction of literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
-        contingently_false_conjuncts_of_literals = [
-            list(literals_branch_contingent_on(1, branch_number)) for branch_number in non_closed_branches(1)]
+        contingently_false_conjuncts_of_literals = list(
+            lists_of_contingencies_for_branches(1))
         # List of lists of variables, one list for each branch in the negated tableaux. Each list contains the variables which have contradicting literal pairs.
         tautology_causing_variables = [[atom for atom in formula_variables if theory_solution.get(
             BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[1], branch_number, atom))] for branch_number in range(len(tableaux_branches[1]))]
