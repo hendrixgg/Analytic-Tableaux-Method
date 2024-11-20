@@ -288,9 +288,14 @@ if __name__ == "__main__":
         formula_variables = atomic_proposition_set(encoded_formula)
         tableaux_branches = both_lists_of_tableaux_branches(
             encoded_formula)
+
+        def generate_formula_literals():
+            for literal in formula_variables:
+                yield literal
+                yield PropositionalLogicFormula(
+                    SYMBOL_TYPE.NEGATION, [literal])
+        all_formula_literals = list(generate_formula_literals())
         # List representing a disjunction of conjunctions of literals, one conjunction for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
-        all_formula_literals = [literal for literal in formula_variables] + [
-            PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [literal]) for literal in formula_variables]
         contingently_true_conjuncts_of_literals = [
             [literal for literal in all_formula_literals if theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[0], branch_number, literal))] for branch_number in range(len(tableaux_branches[0])) if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[0], branch_number))]
         # List representing a disjunctions of conjunction of literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
