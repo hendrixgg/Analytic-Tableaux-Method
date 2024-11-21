@@ -288,10 +288,14 @@ if __name__ == "__main__":
     for formula_id, formula_str in enumerate(CANDIDATE_FORMULAS):
         if theory_solution.get(FormulaClassification(formula_id, FORMULA_CLASSIFICATIONS[0])) is None:
             continue
+        print(f"Formula {formula_id}: {formula_str}")
         encoded_formula = parse_infix_formula(formula_str)[1]
         formula_variables = atomic_proposition_set(encoded_formula)
         tableaux_branches = both_lists_of_tableaux_branches(
             encoded_formula)
+
+        # The functions below are defined within the loop to allow for implicit use of formula_id, encoded_formula, formula_variables, tableaux_branches, and all_formula_literals.
+        # The functions below were created to replace some large nested list comprehensions that were difficult to read and understand.
 
         def generate_formula_literals():
             """Yeilds all literals that could possibly be in the formula (each atomic propotition and it's negation)."""
@@ -330,7 +334,6 @@ if __name__ == "__main__":
             """Yields tuples of variables that have contradicting literal pairs in the branches of the tableaux."""
             for branch_number in range(len(tableaux_branches[tableaux_id])):
                 yield tuple(variables_branch_closed_on(tableaux_id, branch_number))
-        print(f"Formula {formula_id}: {formula_str}")
         for classification in FORMULA_CLASSIFICATIONS:
             formula_classification = FormulaClassification(
                 formula_id, classification)
