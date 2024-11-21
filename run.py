@@ -267,7 +267,7 @@ def example_theory(formula_id: int = 0):
 
 if __name__ == "__main__":
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
-    T = example_theory(10)
+    T = example_theory(9)
 
     # Don't compile until you're finished adding all your constraints!
     print("Computing the Solution...")
@@ -319,10 +319,10 @@ if __name__ == "__main__":
             for literal in formula_variables:
                 if theory_solution.get(BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number, literal)):
                     yield literal
-        tautology_causing_variables = [list(variables_branch_closed_on(
-            1, branch_number)) for branch_number in range(len(tableaux_branches[1]))]
-        contradiction_causing_variables = [list(variables_branch_closed_on(
-            0, branch_number)) for branch_number in range(len(tableaux_branches[0]))]
+        tautology_causing_variables = {tuple(variables_branch_closed_on(
+            1, branch_number)) for branch_number in range(len(tableaux_branches[1]))}
+        contradiction_causing_variables = {tuple(variables_branch_closed_on(
+            0, branch_number)) for branch_number in range(len(tableaux_branches[0]))}
         print(f"Formula {formula_id}: {formula_str}")
         for classification in FORMULA_CLASSIFICATIONS:
             formula_classification = FormulaClassification(
