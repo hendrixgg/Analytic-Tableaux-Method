@@ -324,8 +324,6 @@ if __name__ == "__main__":
         def tableaux_branches_closed_on(tableaux_id: int):
             for branch_number in range(len(tableaux_branches[tableaux_id])):
                 yield tuple(variables_branch_closed_on(tableaux_id, branch_number))
-        tautology_causing_variables = set(tableaux_branches_closed_on(1))
-        contradiction_causing_variables = set(tableaux_branches_closed_on(0))
         print(f"Formula {formula_id}: {formula_str}")
         for classification in FORMULA_CLASSIFICATIONS:
             formula_classification = FormulaClassification(
