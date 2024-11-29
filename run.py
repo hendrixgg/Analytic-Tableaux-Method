@@ -363,20 +363,20 @@ if __name__ == "__main__":
                     # Set of tuples of variables, one tuple for each branch in the negated tableaux. Each tuple contains the variables which have contradicting literal pairs that cause a branch to be closed.
                     # If variables were removed from the original formula such that all of the variables contained within a tuple are removed, then the formula would no longer be a tautology.
                     print(
-                        f"\t\tTautology caused by: {set(tableaux_branches_closed_on(1))}")
+                        f"\t\tTautology caused by: {set(tableaux_branches_closed_on(tableaux_id=1))}")
                 # If contradiction, then say which variables in the regular tableaux cause the contradiction.
                 elif classification == FORMULA_CLASSIFICATIONS[1]:
                     # Set of tuples of variables, one tuple for each branch in the regular tableaux. Each tuple contains the variables which have contradicting literal pairs that cause a branch to be closed.
                     # If variables were removed from the original formula such that all of the variables contained within a tuple are removed, then the formula would no longer be a contradiction.
                     print(
-                        f"\t\tContradiction caused by: {set(tableaux_branches_closed_on(0))}")
+                        f"\t\tContradiction caused by: {set(tableaux_branches_closed_on(tableaux_id=0))}")
                 # If contingency, then say which variables the formula is contingent on.
                 elif classification == FORMULA_CLASSIFICATIONS[2]:
                     # List representing a disjunction of conjunctions of literals, one conjunction for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
                     print(
-                        f"\t\tContingently true on: {list(lists_of_contingencies_for_branches_in_tableaux(0))}")
+                        f"\t\tContingently true on: {list(lists_of_contingencies_for_branches_in_tableaux(tableaux_id=0))}")
                     # List representing a disjunctions of conjunction of literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
                     print(
-                        f"\t\tContingently false on: {list(lists_of_contingencies_for_branches_in_tableaux(1))}")
+                        f"\t\tContingently false on: {list(lists_of_contingencies_for_branches_in_tableaux(tableaux_id=1))}")
 
     print()
