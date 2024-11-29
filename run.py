@@ -37,6 +37,10 @@ CANDIDATE_FORMULAS = [
     # 8: a long conjunction of all the variables plus a negation of one of them (contradiction)
     " & ".join([atom for atom in list(
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " & (~a)",
+    # 9: less-simple tautology
+    "( (a | (~a) | b) & (b | (~b) | d | e | (~e)) ) & (a | (~a) | c)",
+    # 10: less-simple contradiction
+    "( (a & (~a)) | (b & (~b) & c) ) & ( ((~a) | b) & (a | (~b)) )",
 ]
 
 FORMULA_CLASSIFICATIONS = [
@@ -263,7 +267,7 @@ def example_theory(formula_id: int = 0):
 
 if __name__ == "__main__":
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
-    T = example_theory(2)
+    T = example_theory(10)
 
     # Don't compile until you're finished adding all your constraints!
     print("Computing the Solution...")
@@ -284,45 +288,77 @@ if __name__ == "__main__":
     for formula_id, formula_str in enumerate(CANDIDATE_FORMULAS):
         if theory_solution.get(FormulaClassification(formula_id, FORMULA_CLASSIFICATIONS[0])) is None:
             continue
-        encoded_formula = parse_infix_formula(formula_str)[1]
-        regular_tableaux_branches, negated_tableaux_branches = both_lists_of_tableaux_branches(
-            encoded_formula)
-        num_regular_tableaux_branches = len(regular_tableaux_branches)
-        num_negated_tableaux_branches = len(negated_tableaux_branches)
-        # List representing a disjunction of conjunctions of literals, one conjunction for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
-        all_formula_literals = [literal for literal in atomic_proposition_set(
-            encoded_formula)] + [PropositionalLogicFormula(SYMBOL_TYPE.NEGATION, [literal]) for literal in atomic_proposition_set(encoded_formula)]
-        contingently_true_conjuncts_of_literals = [
-            [literal for literal in all_formula_literals if theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[0], branch_number, literal))] for branch_number in range(num_regular_tableaux_branches) if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[0], branch_number))]
-        # List representing a disjunctions of conjunction of literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
-        contingently_false_conjuncts_of_literals = [
-            [literal for literal in all_formula_literals if theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[1], branch_number, literal))] for branch_number in range(num_negated_tableaux_branches) if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[1], branch_number))]
-        # List of lists of variables, one list for each branch in the negated tableaux. Each list contains the variables which have contradicting literal pairs.
-        tautology_causing_variables = [[atom for atom in atomic_proposition_set(encoded_formula) if theory_solution.get(
-            BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[1], branch_number, atom))] for branch_number in range(num_negated_tableaux_branches)]
-        # List of lists of variables, one list for each branch in the regular tableaux. Each list contains the variables which have contradicting literal pairs.
-        contradiction_causing_variables = [[atom for atom in atomic_proposition_set(encoded_formula) if theory_solution.get(
-            BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[0], branch_number, atom))] for branch_number in range(num_regular_tableaux_branches)]
         print(f"Formula {formula_id}: {formula_str}")
+        encoded_formula = parse_infix_formula(formula_str)[1]
+        formula_variables = atomic_proposition_set(encoded_formula)
+        tableaux_branches = both_lists_of_tableaux_branches(
+            encoded_formula)
+
+        # The functions below are defined within the loop to allow for implicit use of formula_id, encoded_formula, formula_variables, tableaux_branches, and all_formula_literals.
+        # The functions below were created to replace some large nested list comprehensions that were difficult to read and understand.
+
+        def generate_formula_literals():
+            """Yeilds all literals that could possibly be in the formula (each atomic propotition and it's negation)."""
+            for literal in formula_variables:
+                yield literal
+                yield PropositionalLogicFormula(
+                    SYMBOL_TYPE.NEGATION, [literal])
+        all_formula_literals = list(generate_formula_literals())
+
+        def non_closed_branches(tableaux_id: int):
+            """Yields branch numbers that are not closed in the tableaux."""
+            for branch_number in range(len(tableaux_branches[tableaux_id])):
+                if not theory_solution.get(BranchClosed(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number)):
+                    yield branch_number
+
+        def branch_contingent_on_literal(tableaux_id: int, branch_number: int, literal):
+            """Returns whether the branch is contingent on the literal, based on the theory_solution."""
+            return theory_solution.get(BranchContingentOnLiteral(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number, literal), False)
+
+        def literals_branch_contingent_on(tableaux_id: int, branch_number: int):
+            """Yields literals that the particular branch of the tableaux is contingent on."""
+            return filter(lambda l: branch_contingent_on_literal(tableaux_id, branch_number, l), all_formula_literals)
+
+        def lists_of_contingencies_for_branches_in_tableaux(tableaux_id: int):
+            """Yields lists of literals that the formula is contingent on for each contingent branch in the tableaux."""
+            for branch_number in non_closed_branches(tableaux_id):
+                yield list(literals_branch_contingent_on(tableaux_id, branch_number))
+
+        def variables_branch_closed_on(tableaux_id: int, branch_number: int):
+            """Yields variables that have contradicting pairs in the branch."""
+            for variable in formula_variables:
+                if theory_solution.get(BranchClosedOnVariable(formula_id, TABLEAUX_NAMES[tableaux_id], branch_number, variable)):
+                    yield variable
+
+        def tableaux_branches_closed_on(tableaux_id: int):
+            """Yields tuples of variables that have contradicting literal pairs in the branches of the tableaux."""
+            for branch_number in range(len(tableaux_branches[tableaux_id])):
+                yield tuple(variables_branch_closed_on(tableaux_id, branch_number))
         for classification in FORMULA_CLASSIFICATIONS:
             formula_classification = FormulaClassification(
                 formula_id, classification)
             print(
                 f"\t{formula_classification}: {theory_solution.get(formula_classification, '?')}")
-            if theory_solution.get(formula_classification):
+            if theory_solution.get(formula_classification, False):
                 # If tautology, then say which variables in the negated tableaux cause the contradiction.
                 if classification == FORMULA_CLASSIFICATIONS[0]:
+                    # Set of tuples of variables, one tuple for each branch in the negated tableaux. Each tuple contains the variables which have contradicting literal pairs that cause a branch to be closed.
+                    # If variables were removed from the original formula such that all of the variables contained within a tuple are removed, then the formula would no longer be a tautology.
                     print(
-                        f"\t\tTautology caused by: {tautology_causing_variables}")
+                        f"\t\tTautology caused by: {set(tableaux_branches_closed_on(1))}")
                 # If contradiction, then say which variables in the regular tableaux cause the contradiction.
-                if classification == FORMULA_CLASSIFICATIONS[1]:
+                elif classification == FORMULA_CLASSIFICATIONS[1]:
+                    # Set of tuples of variables, one tuple for each branch in the regular tableaux. Each tuple contains the variables which have contradicting literal pairs that cause a branch to be closed.
+                    # If variables were removed from the original formula such that all of the variables contained within a tuple are removed, then the formula would no longer be a contradiction.
                     print(
-                        f"\t\tContradiction caused by: {contradiction_causing_variables}")
+                        f"\t\tContradiction caused by: {set(tableaux_branches_closed_on(0))}")
                 # If contingency, then say which variables the formula is contingent on.
-                if classification == FORMULA_CLASSIFICATIONS[2]:
+                elif classification == FORMULA_CLASSIFICATIONS[2]:
+                    # List representing a disjunction of conjunctions of literals, one conjunction for each branch in the regular tableaux. If at least one of these conjunctions is true, then the formula is true.
                     print(
-                        f"\t\tContingently true on: {contingently_true_conjuncts_of_literals}")
+                        f"\t\tContingently true on: {list(lists_of_contingencies_for_branches_in_tableaux(0))}")
+                    # List representing a disjunctions of conjunction of literals, one for each branch in the negated tableaux. If at least one of these conjunctions is true, then the formula is false.
                     print(
-                        f"\t\tContingently false on: {contingently_false_conjuncts_of_literals}")
+                        f"\t\tContingently false on: {list(lists_of_contingencies_for_branches_in_tableaux(1))}")
 
     print()
