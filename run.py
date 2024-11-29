@@ -1,3 +1,5 @@
+import sys
+
 from tableaux_prover.propositional_logic_formula import parse_infix_formula, PropositionalLogicFormula, SYMBOL_TYPE, atomic_proposition_set
 from tableaux_prover.tableaux_aggregator import both_lists_of_tableaux_branches
 
@@ -266,8 +268,17 @@ def example_theory(formula_id: int = 0):
 
 
 if __name__ == "__main__":
+    formula_id = 0
+    if len(sys.argv) != 2:
+        print("Usage: python3 run.py [formula_id]")
+        print(
+            f"formula_id: an integer in the range [0, {len(CANDIDATE_FORMULAS) - 1}]")
+        sys.exit(1)
+    if sys.argv[1] in map(str, range(len(CANDIDATE_FORMULAS))):
+        formula_id = int(sys.argv[1])
+
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
-    T = example_theory(10)
+    T = example_theory(formula_id)
 
     # Don't compile until you're finished adding all your constraints!
     print("Computing the Solution...")
@@ -280,9 +291,9 @@ if __name__ == "__main__":
     # of your model:
     print("\nSatisfiable: %s" % theory_satisfiable)
     print("# Solutions: %d" % theory_num_solutions)
-    # print("   Solution: %s" % theory_solution)
     print(f"# Variables: {len(T.vars())}")
     print(f"# Constraints: {T.size()}")
+    # print("   Solution: %s" % theory_solution)
 
     print("\nFormula Classifications:")
     for formula_id, formula_str in enumerate(CANDIDATE_FORMULAS):
