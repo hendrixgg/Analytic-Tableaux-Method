@@ -83,6 +83,7 @@ CONTRADICTION = a & ~a
 
 @proposition(E)
 class BranchContainsLiteral:
+    """This class is used to represent the proposition that a particular branch in a tableaux contains a particular literal."""
 
     def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, literal: PropositionalLogicFormula):
         self.formula_id = formula_id
@@ -100,6 +101,7 @@ class BranchContainsLiteral:
 
 @proposition(E)
 class BranchContingentOnLiteral:
+    """This class is used to represent the proposition that a particular branch in a tableaux contains a particular literal and not it's opposite. So if branch `1` contains literal `~a` and does not contain the literal `a`, then BranchContingentOnLiteral(..,..,1,~a) would be added to the logic encoding."""
 
     def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, literal: PropositionalLogicFormula):
         self.formula_id = formula_id
@@ -117,6 +119,7 @@ class BranchContingentOnLiteral:
 
 @proposition(E)
 class BranchClosedOnVariable:
+    """This class is used to represent the proposition that a particular branch in a tableaux is closed on a particular variable. This means that the branch contains both the variable and it's negation."""
 
     def __init__(self, formula_id: int, tableaux_name: str, branch_number: int, variable: PropositionalLogicFormula):
         self.formula_id = formula_id
@@ -133,6 +136,7 @@ class BranchClosedOnVariable:
 
 @proposition(E)
 class BranchClosed:
+    """This class is used to represent the proposition that a particular branch in a tableaux is closed. This means that the branch contains a pair of contradicting literals."""
 
     def __init__(self, formula_id: int, tableaux_name: str, branch_number: int):
         self.formula_id = formula_id
@@ -147,6 +151,7 @@ class BranchClosed:
 
 @proposition(E)
 class TableauxClosed:
+    """This class is used to represent the proposition that a particular tableaux is closed. This means that all of the branches in the tableaux are closed."""
 
     def __init__(self, formula_id: int, tableaux_name: str):
         self.formula_id = formula_id
@@ -160,6 +165,7 @@ class TableauxClosed:
 
 @proposition(E)
 class FormulaClassification:
+    """This class is used to represent the classification of a formula as a tautology, contradiction, or contingency."""
 
     def __init__(self, formula_id: int, classification: str):
         self.formula_id = formula_id
@@ -178,10 +184,12 @@ class FormulaClassification:
 
 
 def biconditional(a, b):
+    """Utility function to produce a biconditional between two propositions."""
     return (a >> b) & (b >> a)
 
 
 def example_theory(formula_id: int = 0):
+    """Returns an encoding that represents the tableaux for the formula with the given formula_id."""
     formula_str = CANDIDATE_FORMULAS[formula_id]
     parse_success, formula = parse_infix_formula(formula_str)
     assert parse_success
@@ -242,8 +250,8 @@ def example_theory(formula_id: int = 0):
 
     regular_tableaux_closed = TableauxClosed(formula_id, TABLEAUX_NAMES[0])
     negated_tableaux_closed = TableauxClosed(formula_id, TABLEAUX_NAMES[1])
-    # If both of the teablaux must be closed for this to work, then there must have been an error either
-    # in the tableaux generation or in the constraints that represent it.
+    # If both of the teablauxs must be closed for the encoding to be satisfied, then there must have
+    # been an error either in the tableaux generation or in the constraints that represent it.
     constraint.add_at_most_one(
         E, regular_tableaux_closed, negated_tableaux_closed)
     tautology_classification = FormulaClassification(
@@ -256,8 +264,8 @@ def example_theory(formula_id: int = 0):
     constraint.add_exactly_one(E, tautology_classification,
                                contradiction_classification, contingency_classification)
     # The formula is a tautology iff the regular tableaux is closed and the negated tableaux is closed.
-    E.add_constraint(biconditional(tautology_classification, ~
-                     regular_tableaux_closed & negated_tableaux_closed))
+    E.add_constraint(biconditional(tautology_classification,
+                                   ~regular_tableaux_closed & negated_tableaux_closed))
     # The formula is a contradiction iff the regular tableaux is closed and the negated tableaux is not closed.
     E.add_constraint(biconditional(contradiction_classification,
                      regular_tableaux_closed & ~negated_tableaux_closed))
@@ -268,14 +276,13 @@ def example_theory(formula_id: int = 0):
 
 
 if __name__ == "__main__":
-    formula_id = 0
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 2 or not sys.argv[1] in map(str, range(len(CANDIDATE_FORMULAS))):
         print("Usage: python3 run.py [formula_id]")
         print(
-            f"formula_id: an integer in the range [0, {len(CANDIDATE_FORMULAS) - 1}]")
+            f"formula_id: an integer in the inclusive range [0, {len(CANDIDATE_FORMULAS) - 1}]")
         sys.exit(1)
-    if sys.argv[1] in map(str, range(len(CANDIDATE_FORMULAS))):
-        formula_id = int(sys.argv[1])
+
+    formula_id = int(sys.argv[1])
 
     print("Creating the Semantic Tableau(s) and Representation as a SAT problem...")
     T = example_theory(formula_id)
