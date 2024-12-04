@@ -41,8 +41,18 @@ CANDIDATE_FORMULAS = [
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]) + " & (~a)",
     # 9: less-simple tautology
     "( (a | (~a) | b) & (b | (~b) | d | e | (~e)) ) & (a | (~a) | c)",
-    # 10: less-simple contradiction
-    "( (a & (~a)) | (b & (~b) & c) ) & ( ((~a) | b) & (a | (~b)) )",
+    # 10: removing b and e from the formula to see that it's no longer a tautology
+    "( (a | (~a)) & (d) ) & (a | (~a) | c)",
+    # 11: removing a from the formula to see that it's no longer a tautology
+    "( (b) & (b | (~b) | d | e | (~e)) ) & (c)",
+    # 12: less-simple contradiction
+    "( (a & (~a)) | (b & (~b) & c) ) & ( ((~a) | b) & (a | (~b)) ) & (d & e)",
+    # 13: removing a from the formula to see if it's no longer a contradiction
+    "( (b & (~b) & c)) & ( (b) & ((~b)) ) & (d & e)",
+    # 14: removing b from the formula to see if it's no longer a contradiction
+    "( (a & (~a)) | (c)) & ( ((~a)) & (a) ) & (d & e)",
+    # 15: removing a and b from the formula to see that it's no longer a contradiction
+    "c & (d & e) ",
 ]
 
 FORMULA_CLASSIFICATIONS = [
