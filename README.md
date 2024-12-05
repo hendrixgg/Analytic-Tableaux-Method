@@ -42,7 +42,7 @@ By far the most reliable way to get things running is with [Docker](https://www.
 
 5. **SKIP THIS STEP IF YOU JUST WANT TO RUN THE MODEL**: From there the two folders should be connected, everything you do in one automatically updates in the other. For the project you will write the code in your local directory and then run it through the docker command line. A quick test to see if they're working is to create a file in the folder on your computer then use the terminal to see if it also shows up in the docker container.
 
-6. To run the model use the command `python run.py [formula_id]` where `[formula_id]` is a number from 0 to 10 (inclusive) which specifies an index of a formula from the list of `CANDIDATE_FORMULAS`. The program will output the formula string, it's classification as either tautology, contradiction, or contingency along with some additional information. Note, the longer formulas are more complex and take the program longer to compute. Formulas 4,5,6,7,8 are all relatively long and may take a long time to compute.
+6. To run the model use the command `python run.py [formula_id]` where `[formula_id]` is a number from 0 to 15 (inclusive) which specifies an index of a formula from the list of `CANDIDATE_FORMULAS`. The program will output the formula string, it's classification as either tautology, contradiction, or contingency along with some additional information. Note, the longer formulas are more complex and take the program longer to compute. Formulas 4,5,6,7,8 are all relatively long and may take a long time to compute.
 
 7. End the terminal session using the command `exit`.
 
