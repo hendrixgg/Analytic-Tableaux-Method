@@ -21,7 +21,9 @@ To note:
     * `tableaux_aggregator.py`: Contains a functoin to generate the branches for the tableau of a formula and some associated helper functions.
     * `tableaux_classifier.py`: Contains a function to classify a PropositionalLogicFormula as either tautology, contradiciton, or contingency using the [Method of Analytic Tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux).
 
-
+## Dependencies
+* `nnf`
+* `bauhaus`
 
 ## Running With Docker
 
